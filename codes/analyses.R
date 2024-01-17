@@ -55,53 +55,82 @@ df1$stem <- stems
 
 
 
+# Distribution of middle semantics with PA- =========
+pa_morph <- df1 |> 
+  filter(PA_MORPH) |> # select the word with p-/pa- in its morpheme gloss
+  filter(str_detect(potentially_middle, "^y_")) |> # potentially middle data
+  filter(str_detect(potentially_middle, "_direct\\-reflexive", negate = TRUE)) |> # exclude direct reflexive
+  mutate(middle_sem = if_else(str_detect(potentially_middle, "reciprocal"),
+                              "reciprocal", potentially_middle),
+         middle_sem = if_else(str_detect(potentially_middle, "collective"),
+                              "collective", middle_sem),
+         middle_sem = if_else(str_detect(potentially_middle, "spontaneous"),
+                              "spontaneous-events", middle_sem),
+         middle_sem = if_else(str_detect(potentially_middle, "speech"),
+                              "speech-actions", middle_sem),
+         # middle_sem = if_else(str_detect(potentially_middle, "(direct\\-reflex|indirect\\-middle)"),
+                              # "reflexive", middle_sem),
+         middle_sem = if_else(str_detect(potentially_middle, "antipassive"),
+                              "antipassive", middle_sem),
+         middle_sem = str_replace_all(middle_sem, "(^y_|\\s+\\([^\\)]+\\))", ""))
+## type freq of the middle semantics by word form
+pa_middle_word_productivity <- pa_morph |> 
+  group_by(middle_sem) |> 
+  summarise(typefreq = n_distinct(word)) |> 
+  arrange(desc(typefreq))
+## type freq of the middle semantics by stem form
+pa_middle_stem_productivity <- pa_morph |> 
+  group_by(middle_sem) |> 
+  summarise(typefreq = n_distinct(stem)) |> 
+  arrange(desc(typefreq))
+
 # OLD: type frequency analysis of the situation types =====
 ## grouped by potentially_middle column and summarised by word form
-type_freq_01_by_word <- df1 |> 
-  group_by(potentially_middle) |> 
-  summarise(n_types = n_distinct(word)) |> 
-  arrange(desc(n_types))
+# type_freq_01_by_word <- df1 |> 
+#   group_by(potentially_middle) |> 
+#   summarise(n_types = n_distinct(word)) |> 
+#   arrange(desc(n_types))
 # type_freq_01_by_word
 ## grouped by potentially_middle column and summarised by morpheme gloss
 ### this one is better because the allomorphs are grouped under the same form/morpheme
-type_freq_02_by_morph <- df1 |> 
-  group_by(potentially_middle) |> 
-  summarise(n_types = n_distinct(morph_gloss_en)) |> 
-  arrange(desc(n_types))
+# type_freq_02_by_morph <- df1 |> 
+#   group_by(potentially_middle) |> 
+#   summarise(n_types = n_distinct(morph_gloss_en)) |> 
+#   arrange(desc(n_types))
 # type_freq_02_by_morph
 ### OLD: visualisation =====
-type_freq_02_plot_df <- type_freq_02_by_morph |> 
-  slice_max(order_by = n_types, n = 10) |> 
-  rename(situation_types = potentially_middle, type_freq = n_types) |> 
-  mutate(situation_types = str_replace_all(situation_types, "^y_", ""),
-         situation_types = str_replace_all(situation_types, "\\s\\(.+?\\)", ""),
-         situation_types = str_replace_all(situation_types, "^spontaneous", "spont."))
+# type_freq_02_plot_df <- type_freq_02_by_morph |> 
+#   slice_max(order_by = n_types, n = 10) |> 
+#   rename(situation_types = potentially_middle, type_freq = n_types) |> 
+#   mutate(situation_types = str_replace_all(situation_types, "^y_", ""),
+#          situation_types = str_replace_all(situation_types, "\\s\\(.+?\\)", ""),
+#          situation_types = str_replace_all(situation_types, "^spontaneous", "spont."))
 
-type_freq_02_plot_df |> 
-  mutate(situation_types = factor(situation_types, 
-                                  levels = type_freq_02_plot_df$situation_types) #, 
-         # situation_types = fct_rev(situation_types)
-         ) |> 
-  ggplot(aes(x = situation_types, y = type_freq)) + 
-  geom_col() + 
-  scale_x_discrete(guide = guide_axis(angle = 50)) +
-  labs(y = "Type frequency", x = "Situation types")
+# type_freq_02_plot_df |> 
+#   mutate(situation_types = factor(situation_types, 
+#                                   levels = type_freq_02_plot_df$situation_types) #, 
+#          # situation_types = fct_rev(situation_types)
+#          ) |> 
+#   ggplot(aes(x = situation_types, y = type_freq)) + 
+#   geom_col() + 
+#   scale_x_discrete(guide = guide_axis(angle = 50)) +
+#   labs(y = "Type frequency", x = "Situation types")
 # ggsave("figures/01-productivity-middle.png", dpi = 600, units = "in", width = 6, height = 5)
   # coord_flip()
 
 # type frequency analysis of the situation types with the unified English gloss =====
 ## grouped by potentially_middle and unified_gloss columns and summarised by word form
-type_freq_03_by_word_and_gloss <- df1 |> 
-  group_by(potentially_middle, unified_gloss) |> 
-  summarise(n_types = n_distinct(word)) |> 
-  arrange(desc(potentially_middle), desc(n_types))
+# type_freq_03_by_word_and_gloss <- df1 |> 
+#   group_by(potentially_middle, unified_gloss) |> 
+#   summarise(n_types = n_distinct(word)) |> 
+#   arrange(desc(potentially_middle), desc(n_types))
 # type_freq_03_by_word_and_gloss
 ## grouped by potentially_middle and unified_gloss columns and summarised by morpheme gloss
 ### this one is better because the allomorphs are grouped under the same form/morpheme
-type_freq_04_by_morph_and_gloss <- df1 |> 
-  group_by(potentially_middle, unified_gloss) |> 
-  summarise(n_types = n_distinct(morph_gloss_en)) |> 
-  arrange(desc(n_types))
+# type_freq_04_by_morph_and_gloss <- df1 |> 
+#   group_by(potentially_middle, unified_gloss) |> 
+#   summarise(n_types = n_distinct(morph_gloss_en)) |> 
+#   arrange(desc(n_types))
 # type_freq_04_by_morph_and_gloss
 
 ##
