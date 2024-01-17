@@ -58,6 +58,7 @@ df1$stem <- stems
 # Distribution of middle semantics with PA- =========
 pa_morph <- df1 |> 
   filter(PA_MORPH) |> # select the word with p-/pa- in its morpheme gloss
+  filter(word != "kapakahai'") |> # a causative according to Charlotte
   filter(str_detect(potentially_middle, "^y_")) |> # potentially middle data
   filter(str_detect(potentially_middle, "_direct\\-reflexive", negate = TRUE)) |> # exclude direct reflexive
   mutate(middle_sem = if_else(str_detect(potentially_middle, "reciprocal"),
