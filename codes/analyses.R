@@ -53,11 +53,12 @@ stems <- df1 |>
   unlist()
 df1$stem <- stems
 
-
-
 # Distribution of middle semantics with PA- =========
 pa_morph <- df1 |> 
+  mutate(TEXT_TYPE = replace(TEXT_TYPE, text_title == "Kahler 1955 Retelling", "naturalistic")) |> 
+  # filter(TEXT_TYPE == "naturalistic") |> 
   filter(PA_MORPH) |> # select the word with p-/pa- in its morpheme gloss
+  filter(str_detect(morph_gloss_en, "^NM", negate = TRUE)) |> # exclude word with nominal marker e-
   filter(word != "kapakahai'") |> # a causative according to Charlotte
   filter(str_detect(potentially_middle, "^y_")) |> # potentially middle data
   filter(str_detect(potentially_middle, "_direct\\-reflexive", negate = TRUE)) |> # exclude direct reflexive
@@ -74,16 +75,44 @@ pa_morph <- df1 |>
          middle_sem = if_else(str_detect(potentially_middle, "antipassive"),
                               "antipassive", middle_sem),
          middle_sem = str_replace_all(middle_sem, "(^y_|\\s+\\([^\\)]+\\))", ""))
+
+## interim storage of the pa_morph data for ICAL 2024
+pa_morph |> 
+  write_tsv("data/pa_morph_ical2024.tsv")
+pa_morph |> 
+  write_rds("data/pa_morph_ical2024.rds")
+pa_morph <- read_rds("data/pa_morph_ical2024.rds")
+
 ## type freq of the middle semantics by word form
 pa_middle_word_productivity <- pa_morph |> 
   group_by(middle_sem) |> 
   summarise(typefreq = n_distinct(word)) |> 
   arrange(desc(typefreq))
+pa_middle_word_productivity
+
 ## type freq of the middle semantics by stem form
 pa_middle_stem_productivity <- pa_morph |> 
   group_by(middle_sem) |> 
   summarise(typefreq = n_distinct(stem)) |> 
   arrange(desc(typefreq))
+pa_middle_stem_productivity
+
+pa_middle <- pa_middle_word_productivity |> 
+  mutate(forms = "word forms") |> 
+  bind_rows(pa_middle_stem_productivity |> 
+              mutate(forms = "root forms")) |> 
+  mutate(middle_sem = factor(middle_sem,
+                             levels = pa_middle_word_productivity$middle_sem),
+         forms = factor(forms, levels = c("word forms", "root forms")))
+
+pa_middle |> 
+  ggplot(aes(x = middle_sem, y = typefreq, fill = forms)) + 
+  geom_col(position = position_dodge(.9)) + 
+  scale_x_discrete(guide = guide_axis(angle = 50)) +
+  labs(x = "Middle Semantics", y = "Type frequency",
+       fill = "Count based on")
+ggsave("figures/02-productivity-middle-ical2024.png", 
+       dpi = 600, units = "in", width = 6, height = 3)
 
 # OLD: type frequency analysis of the situation types =====
 ## grouped by potentially_middle column and summarised by word form
